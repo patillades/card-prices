@@ -4,9 +4,12 @@ MkmParser.prototype._host = 'https://es.magiccardmarket.eu/';
 MkmParser.prototype._cards = {};
 MkmParser.prototype._cardLimit;
 MkmParser.prototype._start;
+MkmParser.prototype._pageNum;
+MkmParser.prototype._lastPage = 63;
 
 MkmParser.prototype.readPageNum = function (pageNum) {
     var page = require('webpage').create();
+    this._pageNum = pageNum;
     var self = this;
     
     // resultsPage compta des de 0
@@ -16,8 +19,7 @@ MkmParser.prototype.readPageNum = function (pageNum) {
         div.innerHTML = page.content;
 
         var cardRows = div.querySelectorAll('.MKMTable tbody tr');
-        self._cardLimit = 3;
-//        self._cardLimit = cardRows.length;
+        self._cardLimit = cardRows.length;
         
         self._start = new Date().getTime();
         
@@ -52,7 +54,7 @@ MkmParser.prototype.readPageNum = function (pageNum) {
                 setTimeout(function () {
                     obj.self.readCardPage(obj.card, obj.i);
 
-                }, 1000*obj.i);
+                }, 2000*obj.i);
             })({card: self._cards[i], i: i, self: self});
         }
     });
@@ -71,12 +73,27 @@ MkmParser.prototype.readCardPage = function (card, i) {
         
         self._cards[i].avg = div.querySelector('.availTable .cell_2_1').innerHTML;
         self._cards[i].avg = self._cards[i].avg.substr(0, self._cards[i].avg.length - 2);
+        console.log('got avg price for ' + card.name);
         
         if(i === (self._cardLimit - 1)) {
             self.printCards();
             self.addCardsToFile();
 
-            phantom.exit();
+            if(self._pageNum < self._lastPage) {
+                self._pageNum++;
+                console.log('***');
+                console.log('ON TO PAGE ' + self._pageNum + '!');
+                console.log('***');
+                
+                self.readPageNum(self._pageNum);
+            }
+            else{
+                console.log('***');
+                console.log('DONE!');
+                console.log('***');
+                
+                phantom.exit();
+            }
         }
         
         console.log(new Date().getTime() - self._start + ': ' + 

@@ -2,16 +2,12 @@ var MkmParser = function () {};
 
 MkmParser.prototype._host = 'https://es.magiccardmarket.eu/';
 MkmParser.prototype._cards = {};
-MkmParser.prototype._cardsDone = 0;
 MkmParser.prototype._cardLimit;
 MkmParser.prototype._start;
 
-MkmParser.prototype.readFirstPage = function () {
+MkmParser.prototype.readPageNum = function (pageNum) {
     var page = require('webpage').create();
     var self = this;
-    
-    var args = require('system').args;
-    var pageNum = args[1];
     
     // resultsPage compta des de 0
     page.open(this._host + 'index.php?mainPage=browseUserProducts&idCategory=1&idUser=1854330&resultsPage=' + pageNum, function () {
@@ -125,4 +121,4 @@ MkmParser.prototype.addCardsToFile = function () {
 };
 
 var mkm = new MkmParser();
-mkm.readFirstPage();
+mkm.readPageNum(0);

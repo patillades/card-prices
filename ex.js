@@ -5,38 +5,35 @@ MkmParser.prototype._cards = [];
 MkmParser.prototype._cardLimit;
 
 MkmParser.prototype.readFirstPage = function () {
-    console.log('a');
-    
     var page = require('webpage').create();
     var self = this;
-    console.log('b');
+
     page.open(this._host + 'index.php?mainPage=browseUserProducts&idCategory=1&idUser=103227', function () {
 //    page.open(this._host + 'index.php?mainPage=browseUserProducts&idCategory=1&idUser=1854330', function () {
-        console.log('c');
         // dummy div
         var div = document.createElement('div');
         div.innerHTML = page.content;
 
         var cardRows = div.querySelectorAll('.MKMTable tbody tr');
-        console.log(cardRows.length);
         
         self._cardLimit = cardRows.length;
         
         for(var i = 0; i < self._cardLimit; i++) {
             var name = cardRows[i].children[2].children[0].innerHTML;
-            var href = this._host + cardRows[i].children[2].children[0].href;
+            var href = self._host + cardRows[i].children[2].children[0].href;
             
             var langPattern = /showMsgBox\('[^']+/;
             var lang = langPattern.exec(cardRows[i].children[6].innerHTML)[0];
             lang = lang.substr("showMsgBox('".length, lang.length - "showMsgBox('".length);
-            
+
             var condPattern = /cardstateicons\/\w{2}/;
             var condition = condPattern.exec(cardRows[i].children[6].innerHTML)[0];
             condition = condition.substr(condition.length - 2, 2);
-            
+
             var foil = cardRows[i].children[7].innerHTML === '' ? false : true;
             var priceText = cardRows[i].children[9].innerHTML;
-            
+            priceText = priceText.substr(0, priceText.length - 2);
+
             self._cards.push({
                 name: name,
                 href: href,
@@ -46,22 +43,31 @@ MkmParser.prototype.readFirstPage = function () {
                 myPrice: priceText,
             });
         }
+
+        self.addCardsToFile();
+        
+        console.log('EXIT!');
+        phantom.exit();
     });
     
-    page.close();
-    
-    this.addCardsToFile();
-    
-    phantom.exit();
 };
 
 MkmParser.prototype.addCardsToFile = function () {
+    console.log('---');
+    console.log('add cards');
+    console.log('---');
+    
     var fs = require('fs');
     var file = 'list.json';
 
+//    fs.write(file, '[', 'a');
     for(var i = 0; i < this._cards.length; i++) {
-        fs.write(file, this._cards[i], 'a');
+        fs.write(file, JSON.stringify(this._cards[i]), 'a');
+        
+//        if(i !== this._cards.length - 1)
+        fs.write(file, ',', 'a');
     }
+//    fs.write(file, ']', 'a');
 };
 
 MkmParser.prototype.readCardPage = function (card, i) {
@@ -101,20 +107,16 @@ MkmParser.prototype.printCards = function () {
     }
 };
 
+var args = require('system').args;
+
+if (args.length === 1) {
+    console.log('Try to pass some arguments when invoking this script!');
+}
+else {
+    args.forEach(function(arg, i) {
+        console.log(i + ': ' + arg);
+    });
+}
+
 var mkm = new MkmParser();
 mkm.readFirstPage();
-
-//var txt = fs.read('patilladesList.html');
-//
-////var parser=new DOMParser();
-////var DOM = parser.parseFromString(txt, "text/xml");
-////
-////console.log(DOM);
-//
-//var div = document.createElement('div');
-//div.innerHTML = txt;
-//var cardRows = div.querySelectorAll('.MKMTable tbody tr');
-//    console.log(cardRows.length);
-//    
-//    
-//    phantom.exit();

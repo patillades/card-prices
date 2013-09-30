@@ -10,8 +10,7 @@ MkmParser.prototype.readFirstPage = function () {
     var page = require('webpage').create();
     var self = this;
     
-    page.open(self._host + 'index.php?mainPage=browseUserProducts&idCategory=1&idUser=103227', function () {
-//    page.open(this._host + 'index.php?mainPage=browseUserProducts&idCategory=1&idUser=1854330', function () {
+    page.open(this._host + 'index.php?mainPage=browseUserProducts&idCategory=1&idUser=1854330', function () {
         // dummy div
         var div = document.createElement('div');
         div.innerHTML = page.content;
@@ -23,11 +22,10 @@ MkmParser.prototype.readFirstPage = function () {
         
         for(var i = 0; i < self._cardLimit; i++) {
             var name = cardRows[i].children[2].children[0].innerHTML;
-            var href = self._host + cardRows[i].children[2].children[0].href;
-            console.log(cardRows[i].children[2].children[0].href);
-            console.log(href);
+            var href = self._host + cardRows[i].children[2].children[0].href.replace('file://mkm.js/', '');
+
             var langPattern = /showMsgBox\('[^']+/;
-            var lang = langPattern.exec(cardRows[i].children[6].innerHTML)[0];
+            var lang = langPattern.exec(cardRows[i].children[5].innerHTML)[0];
             lang = lang.substr("showMsgBox('".length, lang.length - "showMsgBox('".length);
             
             var condPattern = /cardstateicons\/\w{2}/;
@@ -88,7 +86,7 @@ MkmParser.prototype.readCardPage = function (card, i) {
 };
 
 MkmParser.prototype.printCards = function () {
-    console.log('CARD | MY PRICE | AVG');
+    console.log('# | CARD | HREF | LANG | CONDITION | FOIL | MY PRICE | AVG');
     
     for(var i in this._cards) {
         console.log(i + ': ' 

@@ -10,13 +10,18 @@ MkmParser.prototype.readFirstPage = function () {
     var page = require('webpage').create();
     var self = this;
     
-    page.open(this._host + 'index.php?mainPage=browseUserProducts&idCategory=1&idUser=1854330', function () {
+    var args = require('system').args;
+    var pageNum = args[1];
+    
+    // resultsPage compta des de 0
+    page.open(this._host + 'index.php?mainPage=browseUserProducts&idCategory=1&idUser=1854330&resultsPage=' + pageNum, function () {
         // dummy div
         var div = document.createElement('div');
         div.innerHTML = page.content;
 
         var cardRows = div.querySelectorAll('.MKMTable tbody tr');
-        self._cardLimit = cardRows.length;
+        self._cardLimit = 3;
+//        self._cardLimit = cardRows.length;
         
         self._start = new Date().getTime();
         
@@ -73,6 +78,7 @@ MkmParser.prototype.readCardPage = function (card, i) {
         
         if(i === (self._cardLimit - 1)) {
             self.printCards();
+            self.addCardsToFile();
 
             phantom.exit();
         }
@@ -98,6 +104,24 @@ MkmParser.prototype.printCards = function () {
             + this._cards[i].price + ' - ' 
             + this._cards[i].avg);
     }
+};
+
+MkmParser.prototype.addCardsToFile = function () {
+    console.log('---');
+    console.log('add cards');
+    console.log('---');
+    
+    var fs = require('fs');
+    var file = 'list.json';
+
+//    fs.write(file, '[', 'a');
+    for(var i in this._cards) {
+        fs.write(file, JSON.stringify(this._cards[i]), 'a');
+        
+//        if(i !== this._cards.length - 1)
+        fs.write(file, ',', 'a');
+    }
+//    fs.write(file, ']', 'a');
 };
 
 var mkm = new MkmParser();

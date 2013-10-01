@@ -93,8 +93,6 @@ MkmParser.prototype.readCardPage = function (card, i) {
                 console.log('***');
                 console.log('DONE!');
                 console.log('***');
-                
-                phantom.exit();
             }
         }
         
@@ -150,5 +148,39 @@ MkmParser.prototype.addCardsToFile = function () {
     }
 };
 
+MkmParser.prototype.analyseData = function () {
+    var fs = require('fs');
+    
+    var data = fs.read(this._jsonFile);
+    
+    data = JSON.parse(data);
+    
+    console.log('***');
+    console.log('There are ' + data.length + ' cards');
+    console.log('***');
+    
+    var price;
+    var avg;
+    
+    for(var i = 0, length = data.length; i < length; i++) {
+        if(data[i].price === null || data[i].avg === null) {
+            console.log('null on ' + data[i].name + ' (' + data[i].language + ', ' + data[i].condition + ') :O');
+        }
+        else {
+            price = Number(data[i].price.replace(',', '.'));
+            avg = Number(data[i].avg.replace(',', '.'));
+
+            if(price < avg 
+                && (avg > 1 || ((price*2) < avg))
+            ) {
+                console.log('price: ' + price + ', avg: ' + avg + ' on ' + data[i].name + ' (' + data[i].language + ', ' + data[i].condition + ')  :/');
+            }
+        }
+    }
+    
+    phantom.exit();
+};
+
 var mkm = new MkmParser();
 mkm.readPageNum(0);
+mkm.analyseData();

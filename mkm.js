@@ -6,6 +6,7 @@ MkmParser.prototype._cardLimit;
 MkmParser.prototype._start;
 MkmParser.prototype._pageNum;
 MkmParser.prototype._lastPage = 63;
+MkmParser.prototype._cardsOnPage = 0;
 
 MkmParser.prototype.readPageNum = function (pageNum) {
     var page = require('webpage').create();
@@ -105,6 +106,8 @@ MkmParser.prototype.readCardPage = function (card, i) {
 };
 
 MkmParser.prototype.printCards = function () {
+    var j = 0;
+    
     console.log('# | CARD | HREF | LANG | CONDITION | FOIL | MY PRICE | AVG');
     
     for(var i in this._cards) {
@@ -116,7 +119,11 @@ MkmParser.prototype.printCards = function () {
             + this._cards[i].foil + ' - '
             + this._cards[i].price + ' - ' 
             + this._cards[i].avg);
+    
+        j++;
     }
+    
+    this._cardsOnPage = j;
 };
 
 MkmParser.prototype.addCardsToFile = function () {
@@ -127,14 +134,20 @@ MkmParser.prototype.addCardsToFile = function () {
     var fs = require('fs');
     var file = 'list.json';
 
-//    fs.write(file, '[', 'a');
+    if(this._pageNum === 0) {
+        fs.write(file, '[', 'a');
+    }
+    
     for(var i in this._cards) {
         fs.write(file, JSON.stringify(this._cards[i]), 'a');
         
-//        if(i !== this._cards.length - 1)
-        fs.write(file, ',', 'a');
+        if(this._pageNum !== this._lastPage && i !== this._cardsOnPage - 1)
+            fs.write(file, ',', 'a');
     }
-//    fs.write(file, ']', 'a');
+    
+    if(this._pageNum === this._lastPage) {
+        fs.write(file, ']', 'a');
+    }
 };
 
 var mkm = new MkmParser();

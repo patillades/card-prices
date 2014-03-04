@@ -16,8 +16,10 @@ MkmParser.prototype.getLastPage = function (content) {
     console.log('***');
     
     var div = document.createElement('div');
-        div.innerHTML = content,
-        img = div.querySelectorAll('[alt="lastResultsPage"]')[0],
+    
+    div.innerHTML = content;
+    
+    var img = div.querySelectorAll('[alt="lastResultsPage"]')[0],
         href = img.parentNode.href,
         aux = /resultsPage=(\d+)/.exec(href);
 
@@ -36,9 +38,10 @@ MkmParser.prototype.readPageNum = function (pageNum) {
     console.log('MkmParser.prototype.readPageNum called for page: ' + pageNum);
     console.log('***');
     
-    var page = require('webpage').create();
     this._pageNum = pageNum;
-    var self = this;
+    
+    var page = require('webpage').create(),
+        self = this;
     
     // resultsPage compta des de 0
     page.open(this._host + this._userCardListURI + pageNum, function () {
@@ -64,20 +67,22 @@ MkmParser.prototype.readPageNum = function (pageNum) {
         self._start = new Date().getTime();
         
         for(var i = 0; i < self._cardLimit; i++) {
-            var name = cardRows[i].children[2].children[1].children[0].children[0].innerHTML;
-            var href = self._host + cardRows[i].children[2].children[1].children[0].children[0].href.replace('file://mkm.js/', '');
+            var name = cardRows[i].children[2].children[1].children[0].children[0].innerHTML,
+                href = self._host + cardRows[i].children[2].children[1].children[0].children[0].href.replace('file://mkm.js/', ''),
 
-            var langPattern = /showMsgBox\('[^']+/;
-            var lang = langPattern.exec(cardRows[i].children[5].innerHTML)[0];
+                langPattern = /showMsgBox\('[^']+/,
+                lang = langPattern.exec(cardRows[i].children[5].innerHTML)[0];
+                
             lang = lang.substr("showMsgBox('".length, lang.length - "showMsgBox('".length);
             
-            var condPattern = /cardstateicons\/\w{2}/;
-            var condition = condPattern.exec(cardRows[i].children[6].innerHTML)[0];
+            var condPattern = /cardstateicons\/\w{2}/,
+                condition = condPattern.exec(cardRows[i].children[6].innerHTML)[0];
+                
             condition = condition.substr(condition.length - 2, 2);
 
-            var foil = cardRows[i].children[7].innerHTML === '' ? false : true;
+            var foil = cardRows[i].children[7].innerHTML === '' ? false : true,
             
-            var priceText = cardRows[i].children[13].innerHTML;
+                priceText = cardRows[i].children[13].innerHTML;
             priceText = priceText.substr(0, priceText.length - 2);
             
             self._cards[i] = {
@@ -93,7 +98,6 @@ MkmParser.prototype.readPageNum = function (pageNum) {
             (function (obj) {
                 setTimeout(function () {
                     obj.self.readCardPage(obj.card, obj.i);
-
                 }, 2000*obj.i);
             })({
               card: self._cards[i], 
@@ -109,8 +113,9 @@ MkmParser.prototype.readCardPage = function (card, i) {
     console.log('MkmParser.prototype.readCardPage called for card: ' + card.name);
     console.log('***');
   
-    var page = require('webpage').create();
-    var self = this;
+    var page = require('webpage').create(),
+        self = this;
+
     console.log(new Date().getTime() - self._start + ': ' + 
         'launch: ' + i + '-' + card.href);
     
@@ -123,7 +128,7 @@ MkmParser.prototype.readCardPage = function (card, i) {
         self._cards[i].avg = self._cards[i].avg.substr(0, self._cards[i].avg.length - 2);
         console.log('got avg price for ' + card.name);
         
-        if(i === (self._cardLimit - 1)) {
+        if (i === (self._cardLimit - 1)) {
             self.printCards();
             self.addCardsToFile();
 
@@ -158,14 +163,14 @@ MkmParser.prototype.printCards = function () {
     console.log('# | CARD | HREF | LANG | CONDITION | FOIL | MY PRICE | AVG');
     
     for(var i in this._cards) {
-        console.log(i + ': ' 
-            + this._cards[i].name + ' - ' 
-            + this._cards[i].href + ' - ' 
-            + this._cards[i].language + ' - ' 
-            + this._cards[i].condition + ' - '
-            + this._cards[i].foil + ' - '
-            + this._cards[i].price + ' - ' 
-            + this._cards[i].avg);
+        console.log(i + ': ' +
+            this._cards[i].name + ' - ' +
+            this._cards[i].href + ' - ' +
+            this._cards[i].language + ' - '  +
+            this._cards[i].condition + ' - ' +
+            this._cards[i].foil + ' - ' +
+            this._cards[i].price + ' - ' +
+            this._cards[i].avg);
     
         j++;
     }
@@ -198,9 +203,9 @@ MkmParser.prototype.addCardsToFile = function () {
 };
 
 MkmParser.prototype.analyseData = function () {
-    var fs = require('fs');
+    var fs = require('fs'),
     
-    var data = fs.read(this._jsonFile);
+        data = fs.read(this._jsonFile);
     
     data = JSON.parse(data);
     
@@ -208,21 +213,26 @@ MkmParser.prototype.analyseData = function () {
     console.log('There are ' + data.length + ' cards');
     console.log('***');
     
-    var price;
-    var avg;
+    var price,
+        avg;
     
-    for(var i = 0, length = data.length; i < length; i++) {
-        if(data[i].price === null || data[i].avg === null) {
+    for (var i = 0, length = data.length; i < length; i++) {
+        if (data[i].price === null || data[i].avg === null) {
             console.log('null on ' + data[i].name + ' (' + data[i].language + ', ' + data[i].condition + ') :O');
         }
         else {
             price = Number(data[i].price.replace(',', '.'));
             avg = Number(data[i].avg.replace(',', '.'));
 
-            if(price < avg 
-                && (avg > 1 || ((price*2) < avg))
+            // cheap
+            if (price < avg 
+                && (avg > 1 || ((price * 2) < avg))
             ) {
                 console.log('price: ' + price + ', avg: ' + avg + ' on ' + data[i].name + ' (' + data[i].language + ', ' + data[i].condition + ')  :/');
+            }
+            // expensive
+            else if (price > (1.1 * avg)) {
+                console.log('CAR! price: ' + price + ', avg: ' + avg + ' on ' + data[i].name + ' (' + data[i].language + ', ' + data[i].condition + ')');
             }
         }
     }

@@ -6,9 +6,30 @@ MkmParser.prototype._cards = {};
 MkmParser.prototype._cardLimit;
 MkmParser.prototype._start;
 MkmParser.prototype._pageNum;
-MkmParser.prototype._lastPage = 62;
+MkmParser.prototype._lastPage;
 MkmParser.prototype._cardsOnPage = 0;
 MkmParser.prototype._jsonFile = 'list_'+ Date.now() +'.json';
+
+MkmParser.prototype.getLastPage = function (content) {
+    console.log('***');
+    console.log('getting last page');
+    console.log('***');
+    
+    var div = document.createElement('div');
+        div.innerHTML = content,
+        img = div.querySelectorAll('[alt="lastResultsPage"]')[0],
+        href = img.parentNode.href,
+        aux = /resultsPage=(\d+)/.exec(href);
+
+    if (aux === null) {
+        console.log('Impossible to find last page');
+    }
+    else {
+        this._lastPage = aux[1];
+        
+        console.log('Last page is: ' + this._lastPage);
+    }
+};
 
 MkmParser.prototype.readPageNum = function (pageNum) {
     console.log('***');
@@ -28,6 +49,10 @@ MkmParser.prototype.readPageNum = function (pageNum) {
         // dummy div
         var div = document.createElement('div');
         div.innerHTML = page.content;
+        
+        if (pageNum === 0) {
+            self.getLastPage(div.innerHTML);
+        }
 
         var cardRows = div.querySelectorAll('.MKMTable tbody tr');
         self._cardLimit = cardRows.length;

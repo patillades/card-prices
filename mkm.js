@@ -95,6 +95,9 @@ MkmParser.prototype.readPageNum = function (pageNum) {
                 avg: null
             };
             
+            // read the card pages with 2 seconds in between them, called with a
+            // closure to prevent the data from being lost due to the advance of 
+            // the loop
             (function (obj) {
                 setTimeout(function () {
                     obj.self.readCardPage(obj.card, obj.i);

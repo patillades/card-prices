@@ -234,7 +234,7 @@ MkmParser.prototype.analyseData = function () {
                 console.log('price: ' + price + ', avg: ' + avg + ' on ' + data[i].name + ' (' + data[i].language + ', ' + data[i].condition + ')  :/');
             }
             // expensive
-            else if (price > (1.1 * avg)) {
+            else if (avg > 0.5 && price > (1.1 * avg)) {
                 console.log('CAR! price: ' + price + ', avg: ' + avg + ' on ' + data[i].name + ' (' + data[i].language + ', ' + data[i].condition + ')');
             }
         }
@@ -243,9 +243,35 @@ MkmParser.prototype.analyseData = function () {
     phantom.exit();
 };
 
-console.log('***');
-console.log('starting parser');
-console.log('***');
+var arguments = require('system').args,
+    mkm = new MkmParser();
 
-var mkm = new MkmParser();
-mkm.readPageNum(0);
+if (arguments.length === 1) {
+    console.log('***');
+    console.log('starting parser');
+    console.log('***');
+
+    mkm.readPageNum(0);
+}
+else if (arguments.length === 2 
+    && arguments[1] === 'analyse'
+) {
+    // troba l'arxiu json més recent
+    var fs = require('fs'),
+        list = fs.list(fs.workingDirectory),
+        jsonFiles = [];
+
+    // filter the file list with only the json lists
+    for (var i = 0; i < list.length; i++) {
+        if (list[i].match(/^list_\d+\.json$/) !== null) {
+            jsonFiles.push(list[i]);
+        }
+    }
+
+    // sort array to make sure you pop the most recent filename out of it
+    jsonFiles.sort();
+    
+    mkm._jsonFile = jsonFiles.pop();
+    
+    mkm.analyseData();
+}

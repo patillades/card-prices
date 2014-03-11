@@ -1,13 +1,16 @@
+/**
+ * @TODO: store the results on a mongo db instance and show results with an 
+ * html table, handlebars and bootstrap could be useful for that
+ */
 var MkmParser = function () {};
 
 MkmParser.prototype._host = 'https://es.magiccardmarket.eu/';
 MkmParser.prototype._userCardListURI = 'index.php?mainPage=browseUserProducts&idCategory=1&idUser=1854330&resultsPage=';
-MkmParser.prototype._cards = {};
+MkmParser.prototype._cards;
 MkmParser.prototype._cardLimit;
 MkmParser.prototype._start;
 MkmParser.prototype._pageNum;
 MkmParser.prototype._lastPage;
-MkmParser.prototype._cardsOnPage = 0;
 MkmParser.prototype._jsonFile = 'list_'+ Date.now() +'.json';
 
 MkmParser.prototype.getLastPage = function (content) {
@@ -19,7 +22,7 @@ MkmParser.prototype.getLastPage = function (content) {
     
     div.innerHTML = content;
     
-    var img = div.querySelectorAll('[alt="lastResultsPage"]')[0],
+    var img = div.querySelector('[src="./img/lastResultsPage.png"]'),
         href = img.parentNode.href,
         aux = /resultsPage=(\d+)/.exec(href);
 
@@ -27,7 +30,7 @@ MkmParser.prototype.getLastPage = function (content) {
         console.log('Impossible to find last page');
     }
     else {
-        this._lastPage = aux[1];
+        this._lastPage = parseInt(aux[1]);
         
         console.log('Last page is: ' + this._lastPage);
     }
@@ -58,6 +61,7 @@ MkmParser.prototype.readPageNum = function (pageNum) {
         }
 
         var cardRows = div.querySelectorAll('.MKMTable tbody tr');
+        // count the number of cards on this page
         self._cardLimit = cardRows.length;
         
         console.log('***');
@@ -65,6 +69,9 @@ MkmParser.prototype.readPageNum = function (pageNum) {
         console.log('***');
         
         self._start = new Date().getTime();
+        
+        // reset the cards array, since it still contains the cards from the previous read page
+        self._cards = [];
         
         for(var i = 0; i < self._cardLimit; i++) {
             var name = cardRows[i].children[2].children[1].children[0].children[0].innerHTML,
@@ -131,6 +138,7 @@ MkmParser.prototype.readCardPage = function (card, i) {
         self._cards[i].avg = self._cards[i].avg.substr(0, self._cards[i].avg.length - 2);
         console.log('got avg price for ' + card.name);
         
+        // if this is the last card on the page, print and save results
         if (i === (self._cardLimit - 1)) {
             self.printCards();
             self.addCardsToFile();
@@ -161,8 +169,6 @@ MkmParser.prototype.readCardPage = function (card, i) {
 };
 
 MkmParser.prototype.printCards = function () {
-    var j = 0;
-    
     console.log('# | CARD | HREF | LANG | CONDITION | FOIL | MY PRICE | AVG');
     
     for(var i in this._cards) {
@@ -174,16 +180,12 @@ MkmParser.prototype.printCards = function () {
             this._cards[i].foil + ' - ' +
             this._cards[i].price + ' - ' +
             this._cards[i].avg);
-    
-        j++;
     }
-    
-    this._cardsOnPage = j;
 };
 
 MkmParser.prototype.addCardsToFile = function () {
     console.log('---');
-    console.log('add cards');
+    console.log('add cards to file; page ' + this._pageNum + ' of ' + this._lastPage);
     console.log('---');
     
     var fs = require('fs'),
@@ -198,7 +200,7 @@ MkmParser.prototype.addCardsToFile = function () {
     }
     
     if(this._pageNum === this._lastPage) {
-        // replace last comma with an array closure
+        // replace last comma to close the json array
         data[data.length - 1] = ']';
     }
     
@@ -233,8 +235,22 @@ MkmParser.prototype.analyseData = function () {
             ) {
                 console.log('price: ' + price + ', avg: ' + avg + ' on ' + data[i].name + ' (' + data[i].language + ', ' + data[i].condition + ')  :/');
             }
+        }
+    }
+    
+    console.log('***');
+    console.log('***');
+    
+    for (var i = 0, length = data.length; i < length; i++) {
+        if (data[i].price === null || data[i].avg === null) {
+            console.log('null on ' + data[i].name + ' (' + data[i].language + ', ' + data[i].condition + ') :O');
+        }
+        else {
+            price = Number(data[i].price.replace(',', '.'));
+            avg = Number(data[i].avg.replace(',', '.'));
+
             // expensive
-            else if (avg > 0.5 && price > (1.1 * avg)) {
+            if (avg > 0.5 && price > (1.1 * avg)) {
                 console.log('CAR! price: ' + price + ', avg: ' + avg + ' on ' + data[i].name + ' (' + data[i].language + ', ' + data[i].condition + ')');
             }
         }

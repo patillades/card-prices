@@ -95,7 +95,7 @@ MkmParser.prototype.readPageNum = function (pageNum) {
                 condition: condition,
                 foil: foil,
                 price: priceText,
-                avg: null
+                trend: null
             };
             
             // read the card pages with 2 seconds in between them, called with a
@@ -130,25 +130,30 @@ MkmParser.prototype.readCardPage = function (card, i) {
         var div = document.createElement('div');
         div.innerHTML = page.content;
         
-        self._cards[i].avg = div.querySelector('.availTable .cell_2_1').innerHTML;
-        self._cards[i].avg = self._cards[i].avg.substr(0, self._cards[i].avg.length - 2);
-        console.log('got avg price for ' + card.name);
+        self._cards[i].trend = self.getPriceWithoutEur(
+            div.querySelector('.availTable .cell_2_1').innerHTML
+        );
+        
+        console.log('got price trend for ' + card.name);
+        
+        self._cards[i].avg = self.getAverageWithoutFoils(div);
         
         // if this is the last card on the page, print and save results
         if (i === (self._cardLimit - 1)) {
             self.printCards();
             self.addCardsToFile();
 
+            console.log('***');
+            
             if(self._pageNum < self._lastPage) {
                 self._pageNum++;
-                console.log('***');
+                
                 console.log('ON TO PAGE ' + self._pageNum + '!');
                 console.log('***');
                 
                 self.readPageNum(self._pageNum);
             }
             else{
-                console.log('***');
                 console.log('DONE!');
                 console.log('***');
                 
@@ -164,8 +169,75 @@ MkmParser.prototype.readCardPage = function (card, i) {
     });
 };
 
+/**
+ * remove the € symbol
+ * 
+ * @param {string} html
+ * @returns {string}
+ */
+MkmParser.prototype.getPriceWithoutEur = function(html) {
+    // check if there's PPU (price per unit), used on playsets
+    var ppu = html.match(/PPU: (\d+,\d{2})/);
+    
+    if (ppu !== null) {
+        html = ppu[1];
+    }
+    
+    return html.substr(0, html.length - 2);
+};
+
+/**
+ * 
+ * @param {string} num
+ * @returns {number}
+ */
+MkmParser.prototype.changeCommaForDot = function(num) {
+    return Number(num.replace(',', '.'));
+};
+
+/**
+ * 
+ * @param {Node} row
+ * @returns {Number}
+ */
+MkmParser.prototype.getSellerAmount = function(row) {
+    var isPlayset = row.children[5].innerHTML !== '',
+        amount = parseInt(row.children[10].innerHTML);
+    
+    return isPlayset ? 4*amount : amount;
+};
+
+MkmParser.prototype.getAverageWithoutFoils = function(div) {
+    var table = div.querySelector('form[name^=itemView] tbody');
+    
+    // remove the foil rows
+    var foilRows = table.querySelectorAll('[alt="foil"]');
+    
+    for (var i = 0, len = foilRows.length; i < len; i++) {
+        var row = foilRows[i].parentNode.parentNode.parentNode;
+        
+        row.parentNode.removeChild(row);
+    }
+    
+    var rows = table.querySelectorAll('tr'),
+        total = 0,
+        amount = 0;
+    
+    for (var i = 0, len = rows.length; i < len; i++) {
+        var sellerAmount = this.getSellerAmount(rows[i]);
+        
+        total += sellerAmount * this.changeCommaForDot(
+            this.getPriceWithoutEur(rows[i].children[9].innerHTML)
+        );
+
+        amount += sellerAmount;
+    }
+    
+    return total / amount;
+};
+
 MkmParser.prototype.printCards = function () {
-    console.log('# | CARD | HREF | LANG | CONDITION | FOIL | MY PRICE | AVG');
+    console.log('# | CARD | HREF | LANG | CONDITION | FOIL | MY PRICE | PRICE TREND | AVG W/O FOILS');
     
     for(var i in this._cards) {
         console.log(i + ': ' +
@@ -175,7 +247,9 @@ MkmParser.prototype.printCards = function () {
             this._cards[i].condition + ' - ' +
             this._cards[i].foil + ' - ' +
             this._cards[i].price + ' - ' +
-            this._cards[i].avg);
+            this._cards[i].trend + ' - ' +
+            this._cards[i].avg
+            );
     }
 };
 
@@ -214,21 +288,21 @@ MkmParser.prototype.analyseData = function () {
     console.log('***');
     
     var price,
-        avg;
+        trend;
     
     for (var i = 0, length = data.length; i < length; i++) {
-        if (data[i].price === null || data[i].avg === null) {
+        if (data[i].price === null || data[i].trend === null) {
             console.log('null on ' + data[i].name + ' (' + data[i].language + ', ' + data[i].condition + ') :O');
         }
         else {
-            price = Number(data[i].price.replace(',', '.'));
-            avg = Number(data[i].avg.replace(',', '.'));
+            price = this.changeCommaForDot(data[i].price);
+            trend = this.changeCommaForDot(data[i].trend);
 
             // cheap
-            if (price < avg 
-                && (avg > 1 || ((price * 2) < avg))
+            if (price < trend 
+                && (trend > 1 || ((price * 2) < trend))
             ) {
-                console.log('price: ' + price + ', avg: ' + avg + ' on ' + data[i].name + ' (' + data[i].language + ', ' + data[i].condition + ')  :/');
+                console.log('price: ' + price + ', trend: ' + trend + ' on ' + data[i].name + ' (' + data[i].language + ', ' + data[i].condition + ')  :/');
             }
         }
     }
@@ -237,16 +311,16 @@ MkmParser.prototype.analyseData = function () {
     console.log('***');
     
     for (var i = 0, length = data.length; i < length; i++) {
-        if (data[i].price === null || data[i].avg === null) {
+        if (data[i].price === null || data[i].trend === null) {
             console.log('null on ' + data[i].name + ' (' + data[i].language + ', ' + data[i].condition + ') :O');
         }
         else {
-            price = Number(data[i].price.replace(',', '.'));
-            avg = Number(data[i].avg.replace(',', '.'));
+            price = this.changeCommaForDot(data[i].price);
+            trend = this.changeCommaForDot(data[i].trend);
 
             // expensive
-            if (avg > 0.5 && price > (1.1 * avg)) {
-                console.log('CAR! price: ' + price + ', avg: ' + avg + ' on ' + data[i].name + ' (' + data[i].language + ', ' + data[i].condition + ')');
+            if (trend > 0.5 && price > (1.1 * trend)) {
+                console.log('CAR! price: ' + price + ', trend: ' + trend + ' on ' + data[i].name + ' (' + data[i].language + ', ' + data[i].condition + ')');
             }
         }
     }
@@ -265,7 +339,7 @@ if (arguments.length === 1) {
     mkm.readPageNum(0);
 }
 else if (arguments.length === 2 
-    && arguments[1] === 'analyse'
+    && arguments[1] === '--analyse'
 ) {
     // troba l'arxiu json més recent
     var fs = require('fs'),
@@ -285,4 +359,27 @@ else if (arguments.length === 2
     mkm._jsonFile = jsonFiles.pop();
     
     mkm.analyseData();
+}
+else if (arguments.length === 3 
+    && arguments[1] === '--single'
+    && arguments[2].match(/^--uri=.+$/) !== null
+) {
+    var cardUri = arguments[2].replace('--uri=', '');
+            
+    console.log('URI: ' + cardUri);
+
+    mkm._start = new Date().getTime();
+    mkm._cards = [{
+        href: cardUri
+    }];
+    mkm._cardLimit = 1;
+    mkm._pageNum = 1;
+    mkm._lastPage = 1;
+    
+    mkm.readCardPage(mkm._cards[0], 0);
+}
+else {
+    console.log('What!?');
+    
+    phantom.exit();
 }

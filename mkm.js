@@ -41,7 +41,7 @@ MkmParser.prototype.readPageNum = function (pageNum) {
     
     var page = require('webpage').create(),
         self = this;
-    
+
     // resultsPage compta des de 0
     page.open(this._host + this._userCardListURI + pageNum, function () {
         console.log('***');
@@ -72,22 +72,19 @@ MkmParser.prototype.readPageNum = function (pageNum) {
         for(var i = 0; i < self._cardLimit; i++) {
             var name = cardRows[i].children[2].children[1].children[0].children[0].innerHTML,
                 href = self._host + cardRows[i].children[2].children[1].children[0].children[0].href.replace('file://mkm.js/', ''),
-
                 langPattern = /showMsgBox\('[^']+/,
                 lang = langPattern.exec(cardRows[i].children[5].innerHTML)[0];
                 
             lang = lang.substr("showMsgBox('".length, lang.length - "showMsgBox('".length);
-            
-            var condPattern = /cardstateicons\/\w{2}/,
-                condition = condPattern.exec(cardRows[i].children[6].innerHTML)[0];
-                
-            condition = condition.substr(condition.length - 2, 2);
 
+            var condPattern = /showMsgBox\('(.+)'/;
+            var condition = condPattern.exec(cardRows[i].children[6].innerHTML)[1];
+            
             var foil = cardRows[i].children[7].innerHTML === '' ? false : true,
-            
                 priceText = cardRows[i].children[13].innerHTML;
+                
             priceText = priceText.substr(0, priceText.length - 2);
-            
+
             self._cards[i] = {
                 name: name,
                 href: href,

@@ -9,7 +9,11 @@ var HOST = 'https://es.magiccardmarket.eu/';
 
 var userCards = [];
 
-function testProductsPage() {
+/**
+ * 
+ * @param {WebPage} page - The page instance that has been closed
+ */
+function testProductsPage(page) {
   try {
     userCards.should.have.length(30, 'mkm paginates on counts of 30 items');
     

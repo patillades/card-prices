@@ -1,7 +1,10 @@
 /* global phantom */
 
+var async = require('async');
+
 var openProductsPage = require('./lib/openProductsPage');
 var getUserProducts = require('./lib/getUserProducts');
+var openCardPage = require('./lib/openCardPage');
 
 var HOST = 'https://es.magiccardmarket.eu/';
 
@@ -14,26 +17,38 @@ var pageNum = 0;
  * @param {WebPage} page - The page instance that has been closed
  */
 function productsPageCloseCallback(page) {
-  // check for a "next page" link to know whether to keep paginating
+  // check for a "next page" link to know whether to keep paginating 
+  // (faster than turning into DOM and querying for the <a> element)
   if (page.content.indexOf('rel="next"') !== -1) {
     pageNum++;
     
-    openProductsByPage(pageNum);
-  } else {
-    console.log('cards length', userCards.length, '\n');
-    
-//    for (var i=0; i < userCards.length; i++) {
-//      console.log(userCards[i].name);
-//      console.log(userCards[i].href);
-//      console.log(userCards[i].language);
-//      console.log(userCards[i].condition);
-//      console.log(userCards[i].foil);
-//      console.log(userCards[i].price);
-//      console.log('---');
-//    }
-    
-    phantom.exit();
+    return openProductsByPage(pageNum);
   }
+  
+  console.log('The user has', userCards.length, 'cards\n');
+
+  async.mapSeries(userCards, openCardPage, function mapCb(err, pricedCards) {
+    if (err) {
+      console.error('mapSeries err', err);
+      
+      return phantom.exit();
+    }
+    
+    console.log('All prices read\n');
+    
+    for (var i=0; i < pricedCards.length; i++) {
+      console.log(pricedCards[i].name);
+      console.log(pricedCards[i].href);
+      console.log(pricedCards[i].language);
+      console.log(pricedCards[i].condition);
+      console.log(pricedCards[i].foil);
+      console.log(pricedCards[i].price);
+      console.log(pricedCards[i].trend);
+      console.log('---');
+    }
+
+    phantom.exit();
+  });
 }
 
 var openProductsByPage = openProductsPage.bind(null, HOST, userCards, getUserProducts, productsPageCloseCallback);

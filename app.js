@@ -14,25 +14,28 @@ var pageNum = 0;
  * @param {WebPage} page - The page instance that has been closed
  */
 function productsPageCloseCallback(page) {
-  if (page.hasNext) {
+  // check for a "next page" link to know whether to keep paginating
+  if (page.content.indexOf('rel="next"') !== -1) {
     pageNum++;
     
-    openProductsPage(HOST, userCards, pageNum, getUserProducts, productsPageCloseCallback);
+    openProductsByPage(pageNum);
   } else {
     console.log('cards length', userCards.length, '\n');
     
-    for (var i=0; i < userCards.length; i++) {
-      console.log(userCards[i].name);
-      console.log(userCards[i].href);
-      console.log(userCards[i].language);
-      console.log(userCards[i].condition);
-      console.log(userCards[i].foil);
-      console.log(userCards[i].price);
-      console.log('---');
-    }
+//    for (var i=0; i < userCards.length; i++) {
+//      console.log(userCards[i].name);
+//      console.log(userCards[i].href);
+//      console.log(userCards[i].language);
+//      console.log(userCards[i].condition);
+//      console.log(userCards[i].foil);
+//      console.log(userCards[i].price);
+//      console.log('---');
+//    }
     
     phantom.exit();
   }
 }
 
-openProductsPage(HOST, userCards, pageNum, getUserProducts, productsPageCloseCallback);
+var openProductsByPage = openProductsPage.bind(null, HOST, userCards, getUserProducts, productsPageCloseCallback);
+
+openProductsByPage(pageNum);

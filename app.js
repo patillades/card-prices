@@ -4,6 +4,7 @@ var async = require('async');
 
 var openProductsPage = require('./lib/openProductsPage');
 var openCardPage = require('./lib/openCardPage');
+var writeCardsToFile = require('./lib/writeCardsToFile');
 
 /** @type Card[] */
 var userCards = [];
@@ -63,6 +64,8 @@ function allProductsGotten() {
       console.log(userCards[i].trend);
       console.log('---');
     }
+    
+    writeCardsToFile(userCards);
 
     phantom.exit();
   });

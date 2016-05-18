@@ -44,7 +44,7 @@ async.doWhilst(
 function allProductsGotten() {
   console.info('The user has', userCards.length, 'cards\n');
   
-  async.mapSeries(userCards, openCardPage, function mapCb(err, pricedCards) {
+  async.eachSeries(userCards, openCardPage, function mapCb(err) {
     if (err) {
       console.error('mapSeries err', err);
       
@@ -53,14 +53,14 @@ function allProductsGotten() {
     
     console.log('All prices read\n');
     
-    for (var i=0; i < pricedCards.length; i++) {
-      console.log(pricedCards[i].name);
-      console.log(pricedCards[i].href);
-      console.log(pricedCards[i].language);
-      console.log(pricedCards[i].condition);
-      console.log(pricedCards[i].foil);
-      console.log(pricedCards[i].price);
-      console.log(pricedCards[i].trend);
+    for (var i=0; i < userCards.length; i++) {
+      console.log(userCards[i].name);
+      console.log(userCards[i].href);
+      console.log(userCards[i].language);
+      console.log(userCards[i].condition);
+      console.log(userCards[i].foil);
+      console.log(userCards[i].price);
+      console.log(userCards[i].trend);
       console.log('---');
     }
 

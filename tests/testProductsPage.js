@@ -23,7 +23,7 @@ function testProductsPage(page) {
     card.language.should.be.String();
     card.condition.should.be.String();
     card.foil.should.be.Boolean();
-    card.price.should.be.String();
+    card.price.should.be.Number();
     
     console.log('assertion passed');
   } catch (e) {

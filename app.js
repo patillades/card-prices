@@ -51,7 +51,7 @@ function allProductsGotten() {
       return phantom.exit();
     }
     
-    console.log('All prices read\n');
+    console.info('All prices read\n');
     
     for (var i=0; i < userCards.length; i++) {
       console.log(userCards[i].name);

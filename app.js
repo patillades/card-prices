@@ -5,6 +5,7 @@ var async = require('async');
 var openProductsPage = require('./lib/openProductsPage');
 var openCardPage = require('./lib/openCardPage');
 
+/** @type Card[] */
 var userCards = [];
 var pageNum = 0;
 

@@ -3,9 +3,6 @@
 var should = require('should');
 
 var openProductsPage = require('./../lib/openProductsPage');
-var getUserProducts = require('./../lib/getUserProducts');
-
-var HOST = 'https://es.magiccardmarket.eu/';
 
 var userCards = [];
 
@@ -36,4 +33,4 @@ function testProductsPage(page) {
   }
 }
 
-openProductsPage(HOST, userCards, 0, getUserProducts, testProductsPage);
+openProductsPage(userCards, testProductsPage, 0);

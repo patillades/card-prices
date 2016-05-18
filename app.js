@@ -3,10 +3,7 @@
 var async = require('async');
 
 var openProductsPage = require('./lib/openProductsPage');
-var getUserProducts = require('./lib/getUserProducts');
 var openCardPage = require('./lib/openCardPage');
-
-var HOST = 'https://es.magiccardmarket.eu/';
 
 var userCards = [];
 var pageNum = 0;
@@ -51,6 +48,6 @@ function productsPageCloseCallback(page) {
   });
 }
 
-var openProductsByPage = openProductsPage.bind(null, HOST, userCards, getUserProducts, productsPageCloseCallback);
+var openProductsByPage = openProductsPage.bind(null, userCards, productsPageCloseCallback);
 
 openProductsByPage(pageNum);

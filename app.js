@@ -45,7 +45,7 @@ async.doWhilst(
 function allProductsGotten() {
   console.info('The user has', userCards.length, 'cards\n');
   
-  async.eachSeries(userCards, openCardPage, function mapCb(err) {
+  async.forEachOfSeries(userCards, openCardPage.bind(null, userCards.length), function mapCb(err) {
     if (err) {
       console.error('mapSeries err', err);
       

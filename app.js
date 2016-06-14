@@ -5,9 +5,19 @@ var async = require('async');
 var openProductsPage = require('./lib/openProductsPage');
 var openCardPage = require('./lib/openCardPage');
 var writeCardsToFile = require('./lib/writeCardsToFile');
+var analyse = require('./lib/analyse');
 
-/** @type Card[] */
+/** 
+ * Store all the cards the user is selling
+ * 
+ * @type Card[] 
+ */
 var userCards = [];
+/**
+ * Keep count of the user's cards result page being checked
+ * 
+ * @type Number
+ */
 var pageNum = 0;
 
 // Keep getting the user's products while there are more pages
@@ -52,20 +62,44 @@ function allProductsGotten() {
       return phantom.exit();
     }
     
-    console.info('All prices read\n');
-    
-    for (var i=0; i < userCards.length; i++) {
-      console.log(userCards[i].name);
-      console.log(userCards[i].href);
-      console.log(userCards[i].language);
-      console.log(userCards[i].condition);
-      console.log(userCards[i].foil);
-      console.log(userCards[i].price);
-      console.log(userCards[i].trend);
-      console.log('---');
-    }
+    console.info('All prices read\n\n');
     
     writeCardsToFile(userCards);
+    
+    // reduce the userCards array to an object where the cards to check are grouped by its price status
+    var cardsToCheck = userCards.reduce(
+      /**
+       * 
+       * @param {{low: Card[], high: Card[]}} result
+       * @param {Card} card
+       * @returns {{low: Card[], high: Card[]}}
+       */
+      function filterByStatus(result, card) {
+        var status = analyse(card);
+
+        if (status !== null) {
+          result[status].push(card);
+        }
+
+        return result;
+      }, {
+        low: [],
+        high: []
+      }
+    );
+    
+    // print the list of cards to be checked
+    Object.keys(cardsToCheck).forEach(function printCardsByStatus(key) {
+      console.info('Cards with status', key.toUpperCase(), '\n');
+      
+      cardsToCheck[key].forEach(function printCardData(card) {
+        console.info('price: ', card.price, ', trend: ', card.trend, ' on ', card.name, 
+          ' (', card.language, ', ', card.condition, (card.foil ? ', FOIL' : ''), ')'
+        );
+      });
+      
+      console.info('\n');
+    });
 
     phantom.exit();
   });

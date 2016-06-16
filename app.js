@@ -1,11 +1,25 @@
 /* global phantom */
 
 var async = require('async');
+var system = require('system');
 
 var openProductsPage = require('./lib/openProductsPage');
 var openCardPage = require('./lib/openCardPage');
 var writeCardsToFile = require('./lib/writeCardsToFile');
-var analyse = require('./lib/analyse');
+var analysePrices = require('./lib/analysePrices');
+var parameters = require('./lib/parameters');
+var latestCards = require('./lib/latestCards');
+
+var paramsObj = parameters(system.args);
+
+// analyse the most recent JSON file if the script is called with the argument "--analyse=true"
+if (paramsObj.analyse === 'true') {
+  var userCards = latestCards();
+
+  analysePrices(userCards);
+  
+  phantom.exit();
+}
 
 /** 
  * Store all the cards the user is selling
@@ -66,40 +80,7 @@ function allProductsGotten() {
     
     writeCardsToFile(userCards);
     
-    // reduce the userCards array to an object where the cards to check are grouped by its price status
-    var cardsToCheck = userCards.reduce(
-      /**
-       * 
-       * @param {{low: Card[], high: Card[]}} result
-       * @param {Card} card
-       * @returns {{low: Card[], high: Card[]}}
-       */
-      function filterByStatus(result, card) {
-        var status = analyse(card);
-
-        if (status !== null) {
-          result[status].push(card);
-        }
-
-        return result;
-      }, {
-        low: [],
-        high: []
-      }
-    );
-    
-    // print the list of cards to be checked
-    Object.keys(cardsToCheck).forEach(function printCardsByStatus(key) {
-      console.info('Cards with status', key.toUpperCase(), '\n');
-      
-      cardsToCheck[key].forEach(function printCardData(card) {
-        console.info('price: ', card.price, ', trend: ', card.trend, ' on ', card.name, 
-          ' (', card.language, ', ', card.condition, (card.foil ? ', FOIL' : ''), ')'
-        );
-      });
-      
-      console.info('\n');
-    });
+    analysePrices(userCards);
 
     phantom.exit();
   });

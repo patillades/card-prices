@@ -10,4 +10,8 @@ and launch the script with the following command:
 When all cards have been read, the data will be stored on a json file on the "data" folder. 
 To reanalyse the latest results, launch the script adding the `--analyse=true` argument.
 
+The only current test can be run with:
+
+`phantomjs --load-images=false tests/testProductsPage.js`
+
 Use phantomjs >= 2.1.1.

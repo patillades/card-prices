@@ -3,12 +3,11 @@
 var async = require('async');
 var system = require('system');
 
-var openProductsPage = require('./lib/openProductsPage');
-var openCardPage = require('./lib/openCardPage');
-var writeCardsToFile = require('./lib/writeCardsToFile');
-var analysePrices = require('./lib/analysePrices');
 var parameters = require('./lib/parameters');
+var openProductsPage = require('./lib/openProductsPage');
+var analysePrices = require('./lib/analysePrices');
 var latestCards = require('./lib/latestCards');
+var getUserCardsPrices = require('./lib/getUserCardsPrices');
 
 var paramsObj = parameters(system.args);
 
@@ -60,28 +59,5 @@ async.doWhilst(
 
     return false;
   },
-  allProductsGotten
+  getUserCardsPrices.bind(null, userCards)
 );
-
-/**
- * Once all the product list pages are read, get the products' price trends
- */
-function allProductsGotten() {
-  console.info('The user has', userCards.length, 'cards\n');
-  
-  async.forEachOfSeries(userCards, openCardPage.bind(null, userCards.length), function mapCb(err) {
-    if (err) {
-      console.error('mapSeries err', err);
-      
-      return phantom.exit();
-    }
-    
-    console.info('All prices read\n\n');
-    
-    writeCardsToFile(userCards);
-    
-    analysePrices(userCards);
-
-    phantom.exit();
-  });
-}

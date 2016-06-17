@@ -1,7 +1,8 @@
 {
-  "engines": {
-    "node": ">= 0.10.0"
-  },
+  "name": "card-prices",
+  "version": "0.0.1",
+  "description": "Get a user's card list and compare its prices against the market's trends",
+  "author": "Xavier Lozano <xavier.lozano.carreras@gmail.com>",
   "devDependencies": {
     "grunt": "^1.0.1",
     "grunt-contrib-jshint": "^1.0.0",
